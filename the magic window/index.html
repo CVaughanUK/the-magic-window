@@ -1,0 +1,405 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <!--
+        the magic window - an fft visualiser
+
+        the magic window allows users to see into the eye of the frequency domain
+        there are three different visualisations to gaze at
+        use the controls on the top left to spawn in different shapes
+        you can alter properties of the shapes
+        audio input can either be a sample wave or aphex twin
+        
+        -->
+
+    <!-- Here we create the positions of the interface controls -->
+    <style>
+        div.testWaveTitle {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            font-size: 120%;
+            font-family: Arial;
+        }
+
+        #audioInputSelect {
+            position: absolute;
+            left: 122px;
+            top: 8px;
+        }
+
+        div.songTitle {
+            position: absolute;
+            left: 175px;
+            top: 15px;
+            font-size: 120%;
+            text-align: center;
+            font-family: Arial;
+        }
+
+        #fftAmntSlider {
+            position: absolute;
+            left: 16px;
+            top: 50px;
+        }
+
+        div.fftTitle {
+            position: absolute;
+            left: 142px;
+            top: 47px;
+            font-size: 120%;
+            font-family: Arial;
+        }
+
+        div.circlesTitle {
+            position: absolute;
+            left: 15px;
+            top: 80px;
+            font-size: 120%;
+            font-family: Arial;
+        }
+
+        #circlesAmntSlider {
+            position: absolute;
+            left: 130px;
+            top: 82px;
+        }
+
+        div.circlesSizeTitle {
+            position: absolute;
+            left: 187px;
+            top: 105px;
+            font-size: 120%;
+            font-family: Arial;
+        }
+
+        #circlesSizeSlider {
+            position: absolute;
+            left: 15px;
+            top: 107px;
+        }
+
+        #circlesDistortSlider {
+            position: absolute;
+            left: 15px;
+            top: 128px;
+        }
+
+        div.circlesDistortTitle {
+            position: absolute;
+            left: 170px;
+            top: 125px;
+            font-size: 120%;
+            font-family: Arial;
+        }
+
+        div.squaresTitle {
+            position: absolute;
+            left: 245px;
+            top: 10px;
+            font-size: 120%;
+            font-family: Arial;
+        }
+
+        #squaresAmntSlider {
+            position: absolute;
+            left: 375px;
+            top: 13px;
+        }
+
+        div.squaresSizeTitle {
+            position: absolute;
+            left: 420px;
+            top: 30px;
+            font-size: 120%;
+            font-family: Arial;
+        }
+
+        #squaresSizeSlider {
+            position: absolute;
+            left: 245px;
+            top: 30px;
+        }
+
+        div.squaresRotateTitle {
+            position: absolute;
+            left: 400px;
+            top: 50px;
+            font-size: 120%;
+            font-family: Arial;
+        }
+
+        #squaresRotateSlider {
+            position: absolute;
+            left: 245px;
+            top: 50px;
+        }
+
+        div.starsTitle {
+            position: absolute;
+            left: 245px;
+            top: 90px;
+            font-size: 120%;
+            font-family: Arial;
+        }
+
+        #starsSwitch {
+            position: absolute;
+            left: 350px;
+            top: 80px;
+        }
+
+        div.starsRandomTitle {
+            position: absolute;
+            left: 245px;
+            top: 120px;
+            font-size: 120%;
+            font-family: Arial;
+        }
+
+        #starsRandomSwitch {
+            position: absolute;
+            left: 350px;
+            top: 110px;
+        }
+
+    </style>
+
+    <meta charset="utf-8" />
+    <link href="css/default.css" rel="stylesheet" />
+
+</head>
+
+<body>
+        <!--This loads in the libraries-->
+        <script src="js/main.js"></script>
+        <script src="js/p5.js"></script>
+        <script src="js/NexusUI.js"></script>
+        <script src="js/_maxiLib.js"></script>
+
+        <!--This declares the ids for the interface controls-->
+        <div id="audioInputSelect"> </div>
+        <div id="fftAmntSlider"> </div>
+        <div id="circlesAmntSlider"></div>
+        <div id="circlesDistortSlider"></div>
+        <div id="circlesSizeSlider"></div>
+        <div id="squaresAmntSlider"></div>
+        <div id="squaresSizeSlider"></div>
+        <div id="squaresRotateSlider"></div>
+        <div id="starsSwitch"></div>
+        <div id="starsRandomSwitch"></div>
+
+        <!--This creates the text-->
+        <div class="testWaveTitle"> Test Wave </div>
+        <div class="songTitle"> Song </div>
+        <div class="fftTitle"> FFT Size</div>
+        <div class="circlesTitle"> Circles Amnt</div>
+        <div class="circlesSizeTitle"> Size</div>
+        <div class="circlesDistortTitle"> Distort</div>
+        <div class="squaresTitle"> Squares Amnt</div>
+        <div class="squaresSizeTitle"> Size</div>
+        <div class="squaresRotateTitle"> Rotate</div>
+        <div class="starsTitle"> Stars </div>
+        <div class="starsRandomTitle"> Randomise</div>
+
+        <script type="text/javascript">
+
+            //This create the audio select interface and updates the variable
+            audioInputSelect = new window.Nexus.Toggle('#audioInputSelect', {
+                'size':
+                [40, 40],
+                'state':
+                false,
+            }
+            );
+            audioInputSelect.on('change', function (val) {
+                audioInput = val;
+            }
+            );
+
+            //This creates the fft amount slider and updates the variable
+            fftAmntSlider = new window.Nexus.Slider('#fftAmntSlider', {
+                'size':
+                [120, 20],
+                'min':
+                0.5,
+                'max':
+                2,
+                'value':
+                1,
+            }
+            );
+            fftAmntSlider.on('change', function (val) {
+                magMult = val;
+            }
+            );
+
+            //This creates the circles interface controls and updates their variables
+            circlesAmntSlider = new window.Nexus.Slider('#circlesAmntSlider', {
+                'size':
+                [90, 20],
+                'min':
+                0,
+                'max':
+                4,
+                'value':
+                0,
+            }
+            );
+            circlesAmntSlider.on('change', function (val) {
+                cAmnt = parseInt(val);
+            }
+            );
+
+            circlesSizeSlider = new window.Nexus.Slider('#circlesSizeSlider', {
+                'size':
+                [135, 20],
+                'min':
+                5,
+                'max':
+                100,
+                'value':
+                100,
+            }
+            );
+            circlesSizeSlider.on('change', function (val) {
+                cRadius = val;
+            }
+            );
+
+            circlesDistortSlider = new window.Nexus.Slider('#circlesDistortSlider', {
+                'size':
+                [135, 20],
+                'min':
+                0,
+                'max':
+                30,
+                'value':
+                1,
+            }
+            );
+            circlesDistortSlider.on('change', function (val) {
+                circleDistort = parseInt(val);
+            }
+            );
+
+            //This creates the squares interface controls and updates their variables
+            squaresAmntSlider = new window.Nexus.Slider('#squaresAmntSlider', {
+                'size':
+                [90, 20],
+                'min':
+                0,
+                'max':
+                4,
+                'value':
+                0,
+            }
+            );
+            squaresAmntSlider.on('change', function (val) {
+                sqAmnt = parseInt(val);
+            }
+            );
+
+            squaresSizeSlider = new window.Nexus.Slider('#squaresSizeSlider', {
+                'size':
+                [140, 20],
+                'min':
+                10,
+                'max':
+                500,
+                'value':
+                200,
+            }
+            );
+            squaresSizeSlider.on('change', function (val) {
+                sqSize = val;
+            }
+            );
+
+            squaresRotateSlider = new window.Nexus.Slider('#squaresRotateSlider', {
+                'size':
+                [140, 20],
+                'min':
+                0,
+                'max':
+                10,
+                'value':
+                0,
+            }
+            );
+            squaresRotateSlider.on('change', function (val) {
+                sqRotate = val;
+            }
+            );
+
+            //This creates the stars control interface and updates their variables
+            starsSwitch = new window.Nexus.Toggle('#starsSwitch', {
+                'size':
+                [40, 40],
+                'state':
+                false,
+            }
+            );
+            starsSwitch.on('change', function (val) {
+                starsOn = val;
+            }
+            );
+
+            starsRandomSwitch = new window.Nexus.Toggle('#starsRandomSwitch', {
+                'size':
+                [40, 40],
+                'state':
+                false,
+            }
+            );
+            starsRandomSwitch.on('change', function (val) {
+                starsRandom = val;
+            }
+            );
+
+            //This creates the maxi audio driver and initialises it
+            var audio = new maximJs.maxiAudio();
+            audio.init();
+
+            //This creates an oscillator and lfo for the test wave
+            var osc = new maximJs.maxiOsc();
+            var lfo = new maximJs.maxiOsc();
+
+            //This creates the fft
+            var fft = new maximJs.maxiFFT();
+
+            //This creates the sample variable and loads the song
+            var song = new maximJs.maxiSample();
+            audio.loadSample('audio/song.mp3', song);
+
+            //These are variables for the audio
+            var audioInput = false;
+            var output;
+            var fftSize = 1024;
+            var magMult = 0.5;
+
+            //This sets up the fft
+            fft.setup(fftSize, 512, 256);
+
+            //This is the audio play function
+            audio.play = function () {
+
+                //This decides whether to output the song or the test wave according to the toggle
+                if (audioInput) {
+                    output = song.play() * 3;
+                } else {
+                    output = osc.sinewave(5000 * lfo.sinewave(0.1)) * 0.5;
+                }
+                this.output = output;
+
+                //This process' the output with the fft
+                if (fft.process(output)) {
+                    fft.magsToDB();
+                }
+            }
+
+        </script>
+
+    </body>
+
+</html>
